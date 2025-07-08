@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Hotel Minibar</title>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBbZO7y8SDXmUsYF3WvgkWbX4Hl5RWBRp4",
+    authDomain: "minibar-34316.firebaseapp.com",
+    databaseURL: "https://minibar-34316-default-rtdb.firebaseio.com",
+    projectId: "minibar-34316",
+    storageBucket: "minibar-34316.firebasestorage.app",
+    messagingSenderId: "133958363403",
+    appId: "1:133958363403:web:3af2690fd4896feb369a0e",
+    measurementId: "G-E5HQK2W1XD"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+</script>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background: linear-gradient(135deg, #e0f7fa, #ffffff);
+    }
+    .container {
+      max-width: 700px;
+      margin: auto;
+      background: #fff;
+      border-radius: 1rem;
+      padding: 2rem;
+      border: 2px solid #00688B;
+      position: relative;
+    }
+    .lang {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+    }
+    .lang button {
+      margin-left: 5px;
+      padding: 3px 8px;
+      font-size: 0.8rem;
+      border-radius: 0.3rem;
+      background-color: #A9745B;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .lang button:hover {
+      background-color: #8d5d49;
+    }
+    h1 {
+      text-align: center;
+      color: #00688B;
+    }
+    .item {
+      background: #f4f4f4;
+      border-left: 5px solid #A9745B;
+      margin: 0.4rem 0;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .total {
+      text-align: right;
+      margin-top: 1rem;
+      font-weight: bold;
+      color: #004d40;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 0.5rem;
+      margin: 0.5rem 0;
+      border-radius: 0.5rem;
+      border: 1px solid #ccc;
+    }
+    button {
+      width: 100%;
+      padding: 0.6rem;
+      margin-top: 0.5rem;
+      border: none;
+      background: #A9745B;
+      color: white;
+      border-radius: 0.5rem;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #8d5d49;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="lang">
+      <button onclick="setLang('en')">EN</button>
+      <button onclick="setLang('ar')">AR</button>
+    </div>
+    <h1 id="title">Hotel Minibar</h1>
+
+    <input type="text" id="guestName" placeholder="Guest Name" />
+    <input type="text" id="roomNumber" placeholder="Room Number" />
+
+    <div id="itemList"></div>
+    <div class="total" id="totalPrice">Total: $0.00</div>
+    <button onclick="saveData()" id="saveBtn">💾 Save</button>
+    <button onclick="printReceipt()">🖨️ Print Receipt</button>
+    <button onclick="location.href='reception.html'">📋 Go to Reception</button>
+  </div>
+
+<script>
+  let lang = "en";
+
+  const translations = {
+    title: { en: "Hotel Minibar", ar: "ميني بار الفندق" },
+    guest: { en: "Guest Name", ar: "اسم النزيل" },
+    room: { en: "Room Number", ar: "رقم الغرفة" },
+    save: { en: "💾 Save", ar: "💾 حفظ" },
+    total: { en: "Total", ar: "المجموع" },
+    print: { en: "🖨️ Print Receipt", ar: "🖨️ طباعة الإيصال" }
+  };
+
+  const items = [
+    { en: "Nuts Box", ar: "علبة مكسرات", price: 1.0 },
+    { en: "Chips Box", ar: "علبة شيبس", price: 1.0 },
+    { en: "Snickers Chocolate", ar: "شوكولاتة سنيكرز", price: 0.85 },
+    { en: "Twix Chocolate", ar: "شوكولاتة تويكس", price: 0.85 },
+    { en: "Bounty", ar: "شوكولاتة باونتي", price: 0.85 },
+    { en: "Red Bull", ar: "ريد بول", price: 2.0 },
+    { en: "Sprite", ar: "سبرايت", price: 0.75 },
+    { en: "Coca-Cola", ar: "كوكاكولا", price: 0.75 },
+    { en: "Ice Coffee", ar: "قهوة مثلجة", price: 1.35 },
+    { en: "Rani Orange", ar: "راني برتقال", price: 1.0 },
+    { en: "Soda Lemon", ar: "صودا ليمون", price: 1.0 }
+  ];
+
+  function setLang(l) {
+    lang = l;
+    document.documentElement.dir = l === "ar" ? "rtl" : "ltr";
+    document.getElementById("title").innerText = translations.title[lang];
+    document.getElementById("guestName").placeholder = translations.guest[lang];
+    document.getElementById("roomNumber").placeholder = translations.room[lang];
+    document.getElementById("saveBtn").innerText = translations.save[lang];
+    renderItems();
+    updateTotal();
+  }
+
+  function renderItems() {
+    const container = document.getElementById("itemList");
+    container.innerHTML = "";
+    items.forEach((item, i) => {
+      const label = document.createElement("label");
+      label.className = "item";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.id = "item_" + i;
+      checkbox.onchange = updateTotal;
+      label.appendChild(checkbox);
+      label.append(" " + item[lang] + ` - $${item.price.toFixed(2)}`);
+      container.appendChild(label);
+    });
+  }
+
+  function updateTotal() {
+    let total = 0;
+    items.forEach((item, i) => {
+      if (document.getElementById("item_" + i).checked) {
+        total += item.price;
+      }
+    });
+    document.getElementById("totalPrice").innerText = `${translations.total[lang]}: $${total.toFixed(2)}`;
+  }
+
+  
+function saveData() {
+  const guest = document.getElementById("guestName").value.trim();
+  const room = document.getElementById("roomNumber").value.trim();
+  if (!guest || !room) {
+    alert(lang === "ar" ? "يرجى إدخال الاسم ورقم الغرفة" : "Please enter guest name and room number");
+    return;
+  }
+
+  const used = items
+    .filter((item, i) => document.getElementById("item_" + i).checked)
+    .map(i => ({ name: i[lang], price: i.price }));
+
+  const receipt = {
+    guest: guest,
+    room: room,
+    date: new Date().toLocaleDateString(),
+    items: used
+  };
+
+  db.ref("minibar").push(receipt)
+    .then(() => {
+      alert(lang === "ar" ? "تم الحفظ!" : "Saved!");
+      location.reload();
+    })
+    .catch(error => {
+      console.error("Firebase save error:", error);
+      alert("Error saving to Firebase.");
+    });
+}
+));
+
+    const receipt = {
+      guest, room,
+      date: new Date().toLocaleDateString(),
+      items: used
+    };
+
+    const all = JSON.parse(localStorage.getItem("receipts") || "[]");
+    all.push(receipt);
+    localStorage.setItem("receipts", JSON.stringify(all));
+    alert(lang === "ar" ? "تم الحفظ!" : "Saved!");
+    location.reload();
+  }
+
+  function printReceipt() {
+    const guest = document.getElementById("guestName").value.trim();
+    const room = document.getElementById("roomNumber").value.trim();
+    if (!guest || !room) return alert(lang === "ar" ? "يرجى إدخال الاسم ورقم الغرفة" : "Please enter guest name and room number");
+
+    const used = items.filter((item, i) => document.getElementById("item_" + i).checked);
+    if (used.length === 0) return alert(lang === "ar" ? "لم يتم تحديد أي عناصر" : "No items selected");
+
+    const total = used.reduce((sum, i) => sum + i.price, 0);
+    const date = new Date().toLocaleDateString();
+    const list = used.map(i => `<li>${i[lang]} - $${i.price.toFixed(2)}</li>`).join("");
+
+    const html = `
+      <div style='padding:20px; font-family:Arial;'>
+        <h2 style='text-align:center;color:#00688B;'>Bluemoon Hotel</h2>
+        <p style='text-align:center;'>Erbil Ainkawa<br>
+        Mobile: 07714449669<br>Email: fo@bluemoonhotel-iq.com<br>
+        Website: https://bluemoonhotel.42web.io</p>
+        <p><strong>${translations.guest[lang]}:</strong> ${guest}</p>
+        <p><strong>${translations.room[lang]}:</strong> ${room}</p>
+        <p><strong>${translations.date?.[lang] || 'Date'}:</strong> ${date}</p>
+        <hr />
+        <ul style='list-style:none;padding:0;'>${list}</ul>
+        <h3 style='text-align:right;'>${translations.total[lang]}: $${total.toFixed(2)}</h3>
+      </div>`;
+
+    const win = window.open("", "", "width=600,height=800");
+    win.document.write(`<html><head><title>Receipt</title></head><body>${html}</body></html>`);
+    win.document.close();
+    win.print();
+  }
+
+  document.addEventListener("DOMContentLoaded", () => setLang("en"));
+</script>
+</body>
+</html>
