@@ -190,39 +190,14 @@ function saveData() {
 
   const used = items
     .filter((item, i) => document.getElementById("item_" + i).checked)
-    .map(i => ({ name: i[lang], price: i.price }));
-
-  const receipt = {
-    guest: guest,
-    room: room,
-    date: new Date().toLocaleDateString(),
-    items: used
-  };
-
-  db.ref("minibar").push(receipt)
-    .then(() => {
-      alert(lang === "ar" ? "تم الحفظ!" : "Saved!");
-      location.reload();
-    })
+    .map(i => ({ name: i[lang], price: i.price   });
+})
     .catch(error => {
       console.error("Firebase save error:", error);
       alert("Error saving to Firebase.");
     });
+  });
 }
-));
-
-    const receipt = {
-      guest, room,
-      date: new Date().toLocaleDateString(),
-      items: used
-    };
-
-    const all = JSON.parse(localStorage.getItem("receipts") || "[]");
-    all.push(receipt);
-    localStorage.setItem("receipts", JSON.stringify(all));
-    alert(lang === "ar" ? "تم الحفظ!" : "Saved!");
-    location.reload();
-  }
 
   function printReceipt() {
     const guest = document.getElementById("guestName").value.trim();
